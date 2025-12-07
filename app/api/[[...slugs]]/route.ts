@@ -30,7 +30,11 @@ const resolveHandler = (appInstance: unknown) =>
   (appInstance as any).handle ?? (appInstance as any).fetch;
 
 export async function GET(request: NextRequest) {
-  const clientId = request.headers.get("x-forwarded-for") ?? request.ip ?? "anon";
+  const forwardedFor = request.headers.get("x-forwarded-for");
+  const clientId =
+    forwardedFor?.split(",")[0]?.trim() ??
+    request.headers.get("x-real-ip") ??
+    "anon";
   if (!rateLimit(clientId)) {
     return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   }
