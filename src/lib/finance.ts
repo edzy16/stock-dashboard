@@ -29,10 +29,8 @@ const fetchCmp = async (symbol: string, exchangeCode: ExchangeCode) => {
     const quote = await yahooFinance.quote(yahooSymbol, {
       fields: ["regularMarketPrice"],
     });
-    const cmp =
-      typeof quote.regularMarketPrice === "number"
-        ? quote.regularMarketPrice
-        : null;
+    const priceRaw = (quote as { regularMarketPrice?: unknown }).regularMarketPrice;
+    const cmp = typeof priceRaw === "number" ? priceRaw : null;
     if (cmp !== null) {
       priceCache.set(cacheKey, cmp);
     }
@@ -91,9 +89,12 @@ const fallbackStatsFromYahoo = async (
 ): Promise<{ peRatio: number | null; latestEarnings: string | null }> => {
   try {
     const yahooSymbol = normalizeSymbol(symbol, exchangeCode);
-    const summary = await yahooFinance.quoteSummary(yahooSymbol, {
+    const summary = (await yahooFinance.quoteSummary(yahooSymbol, {
       modules: ["summaryDetail", "defaultKeyStatistics"],
-    });
+    })) as {
+      summaryDetail?: { trailingPE?: unknown };
+      defaultKeyStatistics?: { trailingPE?: unknown; lastFiscalYearEnd?: unknown; lastSplitDate?: unknown };
+    };
     const pe =
       typeof summary.summaryDetail?.trailingPE === "number"
         ? summary.summaryDetail.trailingPE

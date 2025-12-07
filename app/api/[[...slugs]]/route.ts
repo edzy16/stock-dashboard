@@ -44,4 +44,3 @@ export async function GET(request: NextRequest) {
   if (response instanceof Response) return response;
   return NextResponse.json(response as any, { status: 200 });
 }
-
